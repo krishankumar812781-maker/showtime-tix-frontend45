@@ -44,6 +44,7 @@ const AuthModal = ({ onClose }) => {
 
         setUser(cleanedUser);
 
+        // Standard Manual Login Redirect Logic
         const origin = location.state?.from?.pathname;
         if (cleanedUser.roles.includes("ROLE_ADMIN")) {
           navigate("/admin");
@@ -55,13 +56,11 @@ const AuthModal = ({ onClose }) => {
 
         if (onClose) onClose();
       } else {
-        // ⚡ FIX: Mapping credentials to match your RegisterDto.java
-        // We use usernameOrEmail for both fields to ensure the backend gets what it needs
+        // Mapping credentials to match RegisterDto.java
         const registrationPayload = {
           username: credentials.usernameOrEmail, 
           email: credentials.usernameOrEmail,    
           password: credentials.password,
-          // name: credentials.name // Include this ONLY if you add 'name' to RegisterDto.java
         };
 
         await registerUser(registrationPayload);
@@ -71,7 +70,6 @@ const AuthModal = ({ onClose }) => {
       }
     } catch (err) {
       console.error("Auth Error:", err);
-      // Enhanced error reporting to catch validation messages from the backend
       const message = err.response?.data?.message || err.response?.data || "Authentication failed.";
       setError(typeof message === 'string' ? message : "Invalid input data.");
     } finally {
@@ -79,13 +77,26 @@ const AuthModal = ({ onClose }) => {
     }
   };
 
+  /**
+   * ⚡ GOOGLE LOGIN REDIRECT PERSISTENCE
+   * Because we leave the site for Google, React state (location.state) is lost.
+   * We save the 'origin' path (intended page) to sessionStorage so GoogleCallback can find it.
+   */
   const handleGoogleLogin = () => {
+    const origin = location.state?.from?.pathname || window.location.pathname;
+    // We don't want to redirect back to the login modal itself
+    if (origin !== "/login") {
+      sessionStorage.setItem("postLoginRedirect", origin);
+    }
+    
     window.location.href = GOOGLE_AUTH_URL;
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 md:p-6">
       <div className="bg-white w-full max-w-[450px] max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl relative flex flex-col no-scrollbar">
+        
+        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 right-4 text-gray-400 hover:text-gray-900 text-4xl font-light z-10 p-2"
@@ -98,6 +109,7 @@ const AuthModal = ({ onClose }) => {
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
 
+          {/* Google Login Button */}
           <button
             onClick={handleGoogleLogin}
             type="button"
