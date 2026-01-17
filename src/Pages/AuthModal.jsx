@@ -56,7 +56,7 @@ const AuthModal = ({ onClose }) => {
 
         if (onClose) onClose();
       } else {
-        // Mapping credentials to match RegisterDto.java
+        // ⚡ FIX: Mapping credentials to match your Java RegisterDto.java
         const registrationPayload = {
           username: credentials.usernameOrEmail, 
           email: credentials.usernameOrEmail,    
@@ -70,6 +70,7 @@ const AuthModal = ({ onClose }) => {
       }
     } catch (err) {
       console.error("Auth Error:", err);
+      // Catch specific backend messages like "server_crash" or "Email taken"
       const message = err.response?.data?.message || err.response?.data || "Authentication failed.";
       setError(typeof message === 'string' ? message : "Invalid input data.");
     } finally {
@@ -79,13 +80,14 @@ const AuthModal = ({ onClose }) => {
 
   /**
    * ⚡ GOOGLE LOGIN REDIRECT PERSISTENCE
-   * Because we leave the site for Google, React state (location.state) is lost.
-   * We save the 'origin' path (intended page) to sessionStorage so GoogleCallback can find it.
+   * React state is lost during the redirect to Google.
+   * We store the target path in sessionStorage so GoogleCallback can retrieve it.
    */
   const handleGoogleLogin = () => {
     const origin = location.state?.from?.pathname || window.location.pathname;
-    // We don't want to redirect back to the login modal itself
-    if (origin !== "/login") {
+    
+    // Don't save the login page itself as a redirect target
+    if (origin && origin !== "/login") {
       sessionStorage.setItem("postLoginRedirect", origin);
     }
     
@@ -96,10 +98,11 @@ const AuthModal = ({ onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 md:p-6">
       <div className="bg-white w-full max-w-[450px] max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl relative flex flex-col no-scrollbar">
         
-        {/* Close Button */}
+        {/* Close Button - Triggers onClose (which we set to navigate("/") in App.jsx) */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-4 text-gray-400 hover:text-gray-900 text-4xl font-light z-10 p-2"
+          type="button"
+          className="absolute top-2 right-4 text-gray-400 hover:text-gray-900 text-4xl font-light z-50 p-2 cursor-pointer"
         >
           &times;
         </button>
@@ -109,7 +112,6 @@ const AuthModal = ({ onClose }) => {
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
 
-          {/* Google Login Button */}
           <button
             onClick={handleGoogleLogin}
             type="button"
@@ -135,7 +137,7 @@ const AuthModal = ({ onClose }) => {
           <form onSubmit={handleAuth} className="space-y-3 md:space-y-4">
             {error && (
               <div className="bg-red-50 text-red-600 text-[11px] md:text-xs p-3 rounded-lg text-center font-medium border border-red-100">
-                {error}
+                {error === 'server_crash' ? "Backend processing failed. Check logs." : error}
               </div>
             )}
 

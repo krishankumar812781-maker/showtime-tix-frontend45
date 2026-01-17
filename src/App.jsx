@@ -13,8 +13,10 @@ import MovieSchedule from "./Components/MovieSchedule.jsx";
 import Payment from "./Components/Payment.jsx";
 import PaymentSuccess from "./Components/PaymentSuccess.jsx";
 import MyBookings from "./Pages/MyBookings.jsx";
+import { useNavigate } from "react-router-dom";
 
 const App = () => {
+  const navigate = useNavigate();
   return (
     <div>
       <AuthProvider>
@@ -50,7 +52,7 @@ const App = () => {
           <Route path="/oauth2/callback" element={<GoogleCallback />} />
           <Route
             path="/login"
-            element={<AuthModal onClose={() => window.history.back()} />}
+            element={<AuthModal onClose={() => navigate("/")} />}
           />
 
           {/* ⚡ SECURE ADMIN ROUTE */}
