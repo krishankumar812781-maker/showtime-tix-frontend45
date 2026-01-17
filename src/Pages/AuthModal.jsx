@@ -34,7 +34,6 @@ const AuthModal = ({ onClose }) => {
         });
 
         const userData = response.data;
-
         const rolesArray = userData?.roles || [];
         const cleanedUser = {
           ...userData,
@@ -46,7 +45,6 @@ const AuthModal = ({ onClose }) => {
         setUser(cleanedUser);
 
         const origin = location.state?.from?.pathname;
-
         if (cleanedUser.roles.includes("ROLE_ADMIN")) {
           navigate("/admin");
         } else if (origin) {
@@ -57,19 +55,25 @@ const AuthModal = ({ onClose }) => {
 
         if (onClose) onClose();
       } else {
-        await registerUser(credentials);
+        // ⚡ FIX: Mapping credentials to match your RegisterDto.java
+        // We use usernameOrEmail for both fields to ensure the backend gets what it needs
+        const registrationPayload = {
+          username: credentials.usernameOrEmail, 
+          email: credentials.usernameOrEmail,    
+          password: credentials.password,
+          // name: credentials.name // Include this ONLY if you add 'name' to RegisterDto.java
+        };
+
+        await registerUser(registrationPayload);
         alert("Registration Successful! Please login to continue.");
         setIsLogin(true);
         setCredentials({ name: "", usernameOrEmail: "", password: "" });
       }
     } catch (err) {
       console.error("Auth Error:", err);
-      const message = err.response?.data?.message || "Authentication failed.";
-      if (message.toLowerCase().includes("social login")) {
-        setError(message);
-      } else {
-        setError("Invalid username or password.");
-      }
+      // Enhanced error reporting to catch validation messages from the backend
+      const message = err.response?.data?.message || err.response?.data || "Authentication failed.";
+      setError(typeof message === 'string' ? message : "Invalid input data.");
     } finally {
       setLoading(false);
     }
@@ -81,13 +85,7 @@ const AuthModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4 md:p-6">
-      {/* MODAL CONTAINER 
-          Added 'max-h-[90vh]' and 'overflow-y-auto' to ensure it's scrollable 
-          if the keyboard or screen height is small.
-      */}
       <div className="bg-white w-full max-w-[450px] max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl relative flex flex-col no-scrollbar">
-        
-        {/* Close Button - Larger touch target for mobile */}
         <button
           onClick={onClose}
           className="absolute top-2 right-4 text-gray-400 hover:text-gray-900 text-4xl font-light z-10 p-2"
@@ -146,7 +144,7 @@ const AuthModal = ({ onClose }) => {
               type="text"
               name="usernameOrEmail"
               autoComplete={isLogin ? "username" : "email"}
-              placeholder="Email or Username"
+              placeholder={isLogin ? "Email or Username" : "Email Address"}
               className="w-full p-3 md:p-4 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:border-[#DC143C] outline-none transition-colors"
               value={credentials.usernameOrEmail}
               onChange={handleChange}
