@@ -127,18 +127,32 @@ const AdminShowManager = () => {
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Start Window</label>
                                     <input 
-                                        type="datetime-local" className="w-full p-4 border-2 border-gray-50 rounded-2xl bg-gray-50/50 font-bold text-sm focus:bg-white focus:border-[#DC143C] outline-none transition-all"
-                                        value={formData.startTime} onChange={(e) => setFormData({...formData, startTime: e.target.value})} required
+                                        type="datetime-local" 
+                                        className="w-full p-4 border-2 border-gray-50 rounded-2xl bg-gray-50/50 font-bold text-sm focus:bg-white focus:border-[#DC143C] outline-none transition-all"
+                                        // ⚡ Added min/max constraints
+                                        min="2026-01-20T00:00"
+                                        max="2026-01-26T23:59"
+                                        value={formData.startTime} 
+                                        onChange={(e) => setFormData({...formData, startTime: e.target.value})} 
+                                        required
                                     />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase ml-1">End Window</label>
                                     <input 
-                                        type="datetime-local" className="w-full p-4 border-2 border-gray-50 rounded-2xl bg-gray-50/50 font-bold text-sm focus:bg-white focus:border-[#DC143C] outline-none transition-all"
-                                        value={formData.endTime} onChange={(e) => setFormData({...formData, endTime: e.target.value})} required
+                                        type="datetime-local" 
+                                        className="w-full p-4 border-2 border-gray-50 rounded-2xl bg-gray-50/50 font-bold text-sm focus:bg-white focus:border-[#DC143C] outline-none transition-all"
+                                        // ⚡ Added min/max constraints
+                                        min="2026-01-20T00:00"
+                                        max="2026-01-26T23:59"
+                                        value={formData.endTime} 
+                                        onChange={(e) => setFormData({...formData, endTime: e.target.value})} 
+                                        required
                                     />
                                 </div>
                             </div>
+
+                            
 
                             {/* ⚡ VERTICAL PRICE CONFIGURATION */}
                             <div className="pt-4 border-t border-dashed">
