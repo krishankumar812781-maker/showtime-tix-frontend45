@@ -49,7 +49,7 @@ const App = () => {
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
 
-          <Route path="/oauth2/callback" element={<GoogleCallback />} />
+          {/* <Route path="/oauth2/callback" element={<GoogleCallback />} /> */}
           <Route
             path="/login"
             element={<AuthModal onClose={() => navigate("/")} />}
