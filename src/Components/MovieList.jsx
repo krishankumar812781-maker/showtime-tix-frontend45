@@ -8,6 +8,24 @@ const MovieList = () => {
   const [activeGenre, setActiveGenre] = useState("All");
   const [activeLanguage, setActiveLanguage] = useState("All");
 
+  // Converts string or number minutes to Hours and Minutes
+  const formatDuration = (durationInput) => {
+    if (!durationInput) return "N/A";
+    // This turns "151 min" into "151"
+    const cleanedInput = durationInput.toString().replace(/\D/g, "");
+    const totalMinutes = Number(cleanedInput);
+    // If after cleaning we still don't have a valid number
+    if (isNaN(totalMinutes) || totalMinutes <= 0) return "N/A";
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
+    return `${minutes}m`;
+  };
+
   // ⚡ Dynamic Genre Extraction
   const genres = useMemo(() => {
     if (!movies || movies.length === 0) return ["All"];
@@ -159,7 +177,7 @@ const MovieList = () => {
                        </span>
                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                        <span className="text-[10px] font-bold text-gray-400 uppercase">
-                         {movie.duration || "N/A"}
+                         {formatDuration(movie.duration)}
                        </span>
                     </div>
                   </div>

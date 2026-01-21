@@ -60,7 +60,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-20">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+           <Link to="/" className="flex items-center gap-2 shrink-0">
             <Film size={28} className="text-[#DC143C]" />
             <span className="font-black text-xl md:text-2xl text-gray-900 tracking-tighter uppercase">
               SHOWTIME TIX
