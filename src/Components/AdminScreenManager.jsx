@@ -42,7 +42,8 @@ const AdminScreenManager = () => {
     try {
       await addScreen(screenForm);
       alert(`Screen "${screenForm.name}" added successfully!`);
-      setScreenForm((prev) => ({ ...prev, name: "" }));
+      // Reset name and type but keep the theater selected
+      setScreenForm((prev) => ({ ...prev, name: "", screenType: "REGULAR" }));
       await fetchCurrentScreens();
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Error adding screen.";
@@ -104,9 +105,21 @@ const AdminScreenManager = () => {
                 2. Screen Details
               </label>
               <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
+                {/* Screen Type Input (Now First) */}
                 <input
                   type="text"
-                  placeholder="e.g. Audi 1"
+                  placeholder="Type (e.g. IMAX, 3D)"
+                  className="p-4 border rounded-xl bg-white outline-none focus:border-[#DC143C] text-sm font-bold"
+                  value={screenForm.screenType}
+                  onChange={(e) =>
+                    setScreenForm({ ...screenForm, screenType: e.target.value.toUpperCase() })
+                  }
+                  required
+                />
+                {/* Screen Name Input (Now Second) */}
+                <input
+                  type="text"
+                  placeholder="Name (e.g. Audi 1)"
                   className="p-4 border rounded-xl bg-white outline-none focus:border-[#DC143C] text-sm"
                   value={screenForm.name}
                   onChange={(e) =>
@@ -114,18 +127,6 @@ const AdminScreenManager = () => {
                   }
                   required
                 />
-                <select
-                  className="p-4 border rounded-xl bg-white outline-none focus:border-[#DC143C] font-bold text-sm"
-                  value={screenForm.screenType}
-                  onChange={(e) =>
-                    setScreenForm({ ...screenForm, screenType: e.target.value })
-                  }
-                >
-                  <option value="REGULAR">REGULAR</option>
-                  <option value="IMAX">IMAX</option>
-                  <option value="3D">3D</option>
-                  <option value="GOLD">GOLD CLASS</option>
-                </select>
               </div>
             </div>
 
