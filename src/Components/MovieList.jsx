@@ -176,7 +176,7 @@ const MovieList = () => {
                          {movie.genre?.split(",")[0]}
                        </span>
                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                       <span className="text-[10px] font-bold text-gray-400 uppercase">
+                       <span className="text-[10px] font-bold text-gray-400">
                          {formatDuration(movie.duration)}
                        </span>
                     </div>
