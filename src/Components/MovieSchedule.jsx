@@ -11,7 +11,7 @@ const MovieSchedule = () => {
     const [availableCities, setAvailableCities] = useState(['All']);
     const [isListLoading, setIsListLoading] = useState(true); 
     
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState('2025-01-20');
     const [selectedCity, setSelectedCity] = useState('All');
 
     useEffect(() => {
@@ -47,11 +47,10 @@ const MovieSchedule = () => {
 
     const dateOptions = useMemo(() => {
         return [...Array(7)].map((_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() + i);
+            const d = new Date(2025, 0, 20 + i); // Sets date starting from Jan 20, 2025
             return {
                 full: d.toISOString().split('T')[0],
-                day: i === 0 ? "Today" : d.toLocaleDateString('en-US', { weekday: 'short' }),
+                day: d.toLocaleDateString('en-US', { weekday: 'short' }),
                 date: d.getDate()
             };
         });
@@ -130,7 +129,6 @@ const MovieSchedule = () => {
                                             onClick={() => navigate(`/select-seats/${show.id}`)}
                                             className="group relative flex flex-col items-center justify-center min-w-[100px] md:min-w-[120px] border-2 border-gray-100 hover:border-[#DC143C] px-4 py-3 md:py-4 rounded-2xl transition-all duration-300 bg-white ring-offset-2 hover:ring-2 hover:ring-red-100"
                                         >
-                                            {/* Pulsing indicator to show it's clickable */}
                                             <div className="absolute -top-1 -right-1 flex h-3 w-3">
                                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                               <span className="relative inline-flex rounded-full h-3 w-3 bg-[#DC143C]"></span>
@@ -140,13 +138,11 @@ const MovieSchedule = () => {
                                                 {new Date(show.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                             
-                                            {/* Hover "BOOK" hint */}
                                             <div className="flex items-center gap-1 text-[8px] md:text-[9px] font-black text-gray-400 uppercase mt-1 group-hover:text-[#DC143C]">
                                                 <span>{show.screenName}</span>
                                                 <FaChevronRight className="hidden group-hover:block transition-all" />
                                             </div>
                                             
-                                            {/* Visual Overlay */}
                                             <div className="absolute inset-0 bg-red-50 opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl"></div>
                                         </button>
                                     ))}
