@@ -8,16 +8,14 @@ const AdminSeatManager = () => {
     const [selectedTheater, setSelectedTheater] = useState('');
     const [selectedScreen, setSelectedScreen] = useState('');
     
-    // Grid Configuration State
-    const [rows, setRows] = useState(10);
-    const [cols, setCols] = useState(12);
+    const [rows, setRows] = useState(4);
+    const [cols, setCols] = useState(10);
     const [seatType, setSeatType] = useState('REGULAR');
     
     const [existingSeats, setExistingSeats] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetchingSeats, setFetchingSeats] = useState(false);
 
-    // 1. Fetch screens specifically for the selected theater
     useEffect(() => {
         const fetchScreens = async () => {
             if (!selectedTheater) {
@@ -36,7 +34,6 @@ const AdminSeatManager = () => {
         fetchScreens();
     }, [selectedTheater]);
 
-    // 2. Fetch existing seats when a screen is selected
     const fetchSeats = useCallback(async () => {
         if (!selectedScreen) {
             setExistingSeats([]);
@@ -45,10 +42,14 @@ const AdminSeatManager = () => {
         setFetchingSeats(true);
         try {
             const res = await getSeatsByScreen(selectedScreen);
-            // Sort seats alphabetically by seatNumber so Row A is always at the top (near screen)
-            const sortedSeats = res.data.sort((a, b) => 
-                a.seatNumber.localeCompare(b.seatNumber, undefined, { numeric: true, sensitivity: 'base' })
-            );
+            
+            // ⚡ FIX 1: Natural Sorting (A2 before A10)
+            const sortedSeats = res.data.sort((a, b) => {
+                return a.seatNumber.localeCompare(b.seatNumber, undefined, { 
+                    numeric: true, 
+                    sensitivity: 'base' 
+                });
+            });
             setExistingSeats(sortedSeats);
         } catch (err) {
             setExistingSeats([]);
@@ -63,7 +64,6 @@ const AdminSeatManager = () => {
 
     const handleClearLayout = async () => {
         if (!selectedScreen) return;
-        
         const confirmFirst = window.confirm("Alert: This will delete ALL seats for this screen.");
         if (!confirmFirst) return;
 
@@ -73,8 +73,7 @@ const AdminSeatManager = () => {
             setExistingSeats([]); 
             alert("Layout cleared successfully.");
         } catch (err) {
-            const msg = err.response?.data?.message || "Failed to clear layout. Seats might be booked.";
-            alert(msg);
+            alert(err.response?.data?.message || "Failed to clear layout.");
         } finally {
             setLoading(false);
         }
@@ -83,9 +82,19 @@ const AdminSeatManager = () => {
     const handleGenerateAndSave = async () => {
         if (!selectedScreen) return alert("Please select a screen first!");
         
+        // ⚡ FIX 2: Automatic Row Offsetting
+        // This calculates the next available letter so tiers don't overlap
+        const lastSeat = existingSeats[existingSeats.length - 1];
+        let startRowChar = 65; // 'A'
+        
+        if (lastSeat) {
+            const lastRowLetter = lastSeat.seatNumber.match(/[A-Z]+/)[0];
+            startRowChar = lastRowLetter.charCodeAt(0) + 1;
+        }
+
         const seatList = [];
         for (let r = 0; r < rows; r++) {
-            const rowLabel = String.fromCharCode(65 + r); 
+            const rowLabel = String.fromCharCode(startRowChar + r); 
             for (let c = 1; c <= cols; c++) {
                 seatList.push({
                     seatNumber: `${rowLabel}${c}`,
@@ -102,10 +111,10 @@ const AdminSeatManager = () => {
         setLoading(true);
         try {
             await addSeats(requestDto);
-            alert(`Successfully added ${seatList.length} ${seatType} seats!`);
+            alert(`Added ${seatList.length} ${seatType} seats starting from Row ${String.fromCharCode(startRowChar)}`);
             await fetchSeats();
         } catch (err) {
-            alert("Error adding seats. They might already exist.");
+            alert("Error adding seats. Check if rows already exist.");
         } finally {
             setLoading(false);
         }
@@ -126,14 +135,12 @@ const AdminSeatManager = () => {
             </h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-                
-                {/* CONFIGURATION PANEL */}
                 <div className="lg:col-span-1 space-y-4 md:space-y-6">
-                    <div className="bg-gray-50 p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm">
-                        <h3 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-4 md:mb-6">1. Target Screen</h3>
-                        <div className="space-y-3 md:space-y-4">
+                    <div className="bg-gray-50 p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">1. Target Screen</h3>
+                        <div className="space-y-3">
                             <select 
-                                className="w-full p-3 md:p-4 border rounded-xl bg-white outline-none focus:border-[#DC143C] font-bold text-sm"
+                                className="w-full p-3 border rounded-xl bg-white font-bold text-sm"
                                 value={selectedTheater}
                                 onChange={(e) => setSelectedTheater(e.target.value)}
                             >
@@ -142,7 +149,7 @@ const AdminSeatManager = () => {
                             </select>
 
                             <select 
-                                className="w-full p-3 md:p-4 border rounded-xl bg-white outline-none focus:border-[#DC143C] font-bold text-sm"
+                                className="w-full p-3 border rounded-xl bg-white font-bold text-sm"
                                 value={selectedScreen}
                                 onChange={(e) => setSelectedScreen(e.target.value)}
                                 disabled={!selectedTheater}
@@ -153,44 +160,41 @@ const AdminSeatManager = () => {
                         </div>
                     </div>
 
-                    <div className="bg-gray-50 p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm">
-                        <h3 className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-4 md:mb-6">2. Grid Layout</h3>
-                        <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4">
+                    <div className="bg-gray-50 p-5 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">2. Grid Layout</h3>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Rows (A-Z)</label>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase">Rows to Add</label>
                                 <input 
-                                    type="number" className="w-full p-3 md:p-4 border rounded-xl outline-none text-sm" 
-                                    value={rows} onChange={(e) => setRows(e.target.value)} 
+                                    type="number" className="w-full p-3 border rounded-xl outline-none text-sm" 
+                                    value={rows} onChange={(e) => setRows(parseInt(e.target.value))} 
                                 />
                             </div>
                             <div>
-                                <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Cols (1-50)</label>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase">Cols (Width)</label>
                                 <input 
-                                    type="number" className="w-full p-3 md:p-4 border rounded-xl outline-none text-sm" 
-                                    value={cols} onChange={(e) => setCols(e.target.value)} 
+                                    type="number" className="w-full p-3 border rounded-xl outline-none text-sm" 
+                                    value={cols} onChange={(e) => setCols(parseInt(e.target.value))} 
                                 />
                             </div>
                         </div>
                         <div className="mb-6">
-                            <label className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Seat Tier</label>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase">Seat Tier</label>
                             <select 
-                                className="w-full p-3 md:p-4 border rounded-xl bg-white outline-none font-bold text-sm"
+                                className="w-full p-3 border rounded-xl bg-white font-bold text-sm"
                                 value={seatType} onChange={(e) => setSeatType(e.target.value)}
                             >
                                 <option value="REGULAR">REGULAR (Front)</option>
                                 <option value="PREMIUM">PREMIUM (Middle)</option>
                                 <option value="GOLD">GOLD CLASS (Back)</option>
                             </select>
-                            <p className="mt-2 text-[8px] text-gray-400 font-bold uppercase tracking-tight italic">
-                                * Tip: Generate Regular seats first (A-E), then Premium (F-J), etc.
-                            </p>
                         </div>
 
                         <div className="space-y-3">
                             <button 
                                 onClick={handleGenerateAndSave}
                                 disabled={loading || !selectedScreen}
-                                className="w-full bg-[#DC143C] text-white py-4 md:py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-100 hover:bg-red-700 transition-all disabled:bg-gray-300"
+                                className="w-full bg-[#DC143C] text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-red-700 disabled:bg-gray-300 transition-all"
                             >
                                 {loading ? "Processing..." : "Generate & Save Seats"}
                             </button>
@@ -199,7 +203,7 @@ const AdminSeatManager = () => {
                                 <button 
                                     onClick={handleClearLayout}
                                     disabled={loading}
-                                    className="w-full bg-white text-red-600 border-2 border-red-600 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-50 transition-all"
+                                    className="w-full bg-white text-red-600 border-2 border-red-600 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-50 transition-all"
                                 >
                                     Clear Existing Layout
                                 </button>
@@ -208,48 +212,45 @@ const AdminSeatManager = () => {
                     </div>
                 </div>
 
-                {/* VISUAL PREVIEW PANEL */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[400px] md:min-h-[500px]">
-                        <div className="p-4 md:p-6 border-b bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <h3 className="font-black text-gray-800 uppercase text-[10px] md:text-xs tracking-widest">Live Seating Preview</h3>
-                            {existingSeats.length > 0 && (
-                                <div className="flex flex-wrap justify-center gap-2 md:gap-4 items-center">
-                                    <div className="flex gap-2 items-center mr-2">
-                                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-amber-400"></div><span className="text-[8px] font-bold">GOLD</span></div>
-                                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-blue-400"></div><span className="text-[8px] font-bold">PREM</span></div>
-                                        <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-gray-300"></div><span className="text-[8px] font-bold">REG</span></div>
-                                    </div>
-                                    <span className="text-[9px] md:text-[10px] bg-green-100 text-green-600 px-3 py-1 rounded-full font-bold">
-                                        {existingSeats.length} SEATS REGISTERED
-                                    </span>
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+                        <div className="p-6 border-b bg-gray-50 flex justify-between items-center">
+                            <h3 className="font-black text-gray-800 uppercase text-xs tracking-widest">Live Seating Preview</h3>
+                            <div className="flex gap-4 items-center">
+                                <div className="flex gap-2">
+                                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-amber-400"></div><span className="text-[8px] font-bold uppercase">Gold</span></div>
+                                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-blue-400"></div><span className="text-[8px] font-bold uppercase">Prem</span></div>
+                                    <div className="flex items-center gap-1"><div className="w-2 h-2 rounded bg-gray-300"></div><span className="text-[8px] font-bold uppercase">Reg</span></div>
                                 </div>
-                            )}
+                                <span className="text-[10px] bg-green-100 text-green-600 px-3 py-1 rounded-full font-bold">
+                                    {existingSeats.length} SEATS
+                                </span>
+                            </div>
                         </div>
 
-                        <div className="flex-1 p-4 md:p-8 overflow-auto text-center">
+                        <div className="flex-1 p-8 overflow-auto text-center">
                             {fetchingSeats ? (
                                 <div className="h-full flex items-center justify-center animate-pulse text-gray-300 font-bold uppercase tracking-widest text-sm">
-                                    Fetching Database Layout...
+                                    Updating Grid...
                                 </div>
                             ) : existingSeats.length > 0 ? (
-                                <div className="flex flex-col items-center min-w-max px-4">
-                                    <div className="w-full max-w-md h-2 bg-gray-200 rounded-full mb-10 md:mb-12 shadow-inner relative">
-                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Screen This Way</span>
+                                <div className="flex flex-col items-center">
+                                    {/* Screen Visualizer */}
+                                    <div className="w-3/4 h-1.5 bg-gray-200 rounded-full mb-12 shadow-inner relative">
+                                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Cinema Screen This Way</span>
                                     </div>
 
                                     <div 
-                                        className="grid gap-1.5 md:gap-2"
+                                        className="grid gap-2"
                                         style={{ 
-                                            gridTemplateColumns: `repeat(${Math.max(...existingSeats.map(s => parseInt(s.seatNumber.replace(/^\D+/g, '')) || 1))}, minmax(0, 1fr))` 
+                                            // ⚡ FIX 3: Dynamic Grid columns based on max seat number found
+                                            gridTemplateColumns: `repeat(${Math.max(...existingSeats.map(s => parseInt(s.seatNumber.match(/\d+/)[0]) || 1))}, minmax(0, 1fr))` 
                                         }}
                                     >
                                         {existingSeats.map(seat => (
                                             <div 
                                                 key={seat.id} 
-                                                title={`${seat.seatNumber} - ${seat.seatType}`}
-                                                className={`w-7 h-7 md:w-9 md:h-9 flex items-center justify-center text-[8px] md:text-[9px] font-black rounded md:rounded-lg border transition-all cursor-default shadow-sm
-                                                    ${getSeatColorClass(seat.seatType)}`}
+                                                className={`w-9 h-9 flex items-center justify-center text-[9px] font-black rounded-lg border transition-all shadow-sm ${getSeatColorClass(seat.seatType)}`}
                                             >
                                                 {seat.seatNumber}
                                             </div>
@@ -257,10 +258,9 @@ const AdminSeatManager = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center opacity-20 py-10 md:py-20">
-                                    <div className="text-6xl md:text-8xl mb-4">💺</div>
-                                    <p className="font-bold uppercase tracking-widest text-lg md:text-xl text-gray-900">No Layout Defined</p>
-                                    <p className="text-xs md:text-sm text-gray-500">Select a screen and generate the grid.</p>
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 py-20">
+                                    <div className="text-8xl mb-4">💺</div>
+                                    <p className="font-bold uppercase tracking-widest text-xl text-gray-900">No Layout Defined</p>
                                 </div>
                             )}
                         </div>
