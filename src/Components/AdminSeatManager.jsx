@@ -45,7 +45,11 @@ const AdminSeatManager = () => {
         setFetchingSeats(true);
         try {
             const res = await getSeatsByScreen(selectedScreen);
-            setExistingSeats(res.data);
+            // Sort seats alphabetically by seatNumber so Row A is always at the top (near screen)
+            const sortedSeats = res.data.sort((a, b) => 
+                a.seatNumber.localeCompare(b.seatNumber, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            setExistingSeats(sortedSeats);
         } catch (err) {
             setExistingSeats([]);
         } finally {
@@ -98,7 +102,7 @@ const AdminSeatManager = () => {
         setLoading(true);
         try {
             await addSeats(requestDto);
-            alert(`Successfully added ${seatList.length} seats!`);
+            alert(`Successfully added ${seatList.length} ${seatType} seats!`);
             await fetchSeats();
         } catch (err) {
             alert("Error adding seats. They might already exist.");
@@ -173,10 +177,13 @@ const AdminSeatManager = () => {
                                 className="w-full p-3 md:p-4 border rounded-xl bg-white outline-none font-bold text-sm"
                                 value={seatType} onChange={(e) => setSeatType(e.target.value)}
                             >
-                                <option value="REGULAR">REGULAR</option>
-                                <option value="PREMIUM">PREMIUM</option>
-                                <option value="GOLD">GOLD CLASS</option>
+                                <option value="REGULAR">REGULAR (Front)</option>
+                                <option value="PREMIUM">PREMIUM (Middle)</option>
+                                <option value="GOLD">GOLD CLASS (Back)</option>
                             </select>
+                            <p className="mt-2 text-[8px] text-gray-400 font-bold uppercase tracking-tight italic">
+                                * Tip: Generate Regular seats first (A-E), then Premium (F-J), etc.
+                            </p>
                         </div>
 
                         <div className="space-y-3">
@@ -220,7 +227,6 @@ const AdminSeatManager = () => {
                             )}
                         </div>
 
-                        {/* Scrollable container for the grid */}
                         <div className="flex-1 p-4 md:p-8 overflow-auto text-center">
                             {fetchingSeats ? (
                                 <div className="h-full flex items-center justify-center animate-pulse text-gray-300 font-bold uppercase tracking-widest text-sm">
@@ -229,7 +235,7 @@ const AdminSeatManager = () => {
                             ) : existingSeats.length > 0 ? (
                                 <div className="flex flex-col items-center min-w-max px-4">
                                     <div className="w-full max-w-md h-2 bg-gray-200 rounded-full mb-10 md:mb-12 shadow-inner relative">
-                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Screen Screen</span>
+                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] md:text-[10px] font-bold text-gray-400 uppercase">Screen This Way</span>
                                     </div>
 
                                     <div 
