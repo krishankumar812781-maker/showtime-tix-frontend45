@@ -11,7 +11,8 @@ const MovieSchedule = () => {
     const [availableCities, setAvailableCities] = useState(['All']);
     const [isListLoading, setIsListLoading] = useState(true); 
     
-    const [selectedDate, setSelectedDate] = useState('2025-01-20');
+    // ⚡ FIX: Updated initial date to 2026 to match your DB records
+    const [selectedDate, setSelectedDate] = useState('2026-01-20');
     const [selectedCity, setSelectedCity] = useState('All');
 
     useEffect(() => {
@@ -37,7 +38,7 @@ const MovieSchedule = () => {
                 });
                 setShows(res.data);
             } catch (err) {
-                console.error(err);
+                console.error("Fetch Error:", err);
             } finally {
                 setIsListLoading(false);
             }
@@ -45,9 +46,11 @@ const MovieSchedule = () => {
         fetchFilteredShows();
     }, [movieId, selectedDate, selectedCity]);
 
+    // ⚡ FIX: Updated date generator to use 2026
     const dateOptions = useMemo(() => {
         return [...Array(7)].map((_, i) => {
-            const d = new Date(2025, 0, 20 + i); // Sets date starting from Jan 20, 2025
+            // Generates: Jan 20, 21, 22... of 2026
+            const d = new Date(2026, 0, 20 + i); 
             return {
                 full: d.toISOString().split('T')[0],
                 day: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -111,7 +114,7 @@ const MovieSchedule = () => {
                     </div>
                 ) : Object.keys(groupedShows).length > 0 ? (
                     Object.values(groupedShows).map((theater) => (
-                        <div key={theater.name} className="bg-white rounded-3xl md:rounded-[40px] p-5 md:p-8 mb-6 border border-gray-100 shadow-sm hover:shadow-md transition-all animate-in fade-in slide-in-from-bottom-4">
+                        <div key={theater.name} className="bg-white rounded-3xl md:rounded-[40px] p-5 md:p-8 mb-6 border border-gray-100 shadow-sm hover:shadow-md transition-all">
                             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                 <div className="space-y-1">
                                     <h3 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter">{theater.name}</h3>
@@ -121,7 +124,6 @@ const MovieSchedule = () => {
                                     </div>
                                 </div>
                                 
-                                {/* TIME SLOTS CONTAINER */}
                                 <div className="flex flex-wrap gap-3 md:gap-4">
                                     {theater.shows.map((show) => (
                                         <button
@@ -129,11 +131,6 @@ const MovieSchedule = () => {
                                             onClick={() => navigate(`/select-seats/${show.id}`)}
                                             className="group relative flex flex-col items-center justify-center min-w-[100px] md:min-w-[120px] border-2 border-gray-100 hover:border-[#DC143C] px-4 py-3 md:py-4 rounded-2xl transition-all duration-300 bg-white ring-offset-2 hover:ring-2 hover:ring-red-100"
                                         >
-                                            <div className="absolute -top-1 -right-1 flex h-3 w-3">
-                                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                              <span className="relative inline-flex rounded-full h-3 w-3 bg-[#DC143C]"></span>
-                                            </div>
-
                                             <div className="text-sm md:text-base font-black text-gray-800 group-hover:text-[#DC143C] transition-colors">
                                                 {new Date(show.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
@@ -142,8 +139,6 @@ const MovieSchedule = () => {
                                                 <span>{show.screenName}</span>
                                                 <FaChevronRight className="hidden group-hover:block transition-all" />
                                             </div>
-                                            
-                                            <div className="absolute inset-0 bg-red-50 opacity-0 group-hover:opacity-5 transition-opacity rounded-2xl"></div>
                                         </button>
                                     ))}
                                 </div>
@@ -153,7 +148,10 @@ const MovieSchedule = () => {
                 ) : (
                     <div className="text-center py-20 md:py-32 bg-white rounded-[30px] md:rounded-[60px] border-4 border-dashed border-gray-100">
                         <FaCalendarAlt className="text-gray-200 text-5xl mx-auto mb-6" />
-                        <p className="text-gray-400 font-black uppercase tracking-widest text-xs md:text-sm px-6">No shows found, Please check on another date</p>
+                        <p className="text-gray-400 font-black uppercase tracking-widest text-xs md:text-sm px-6 text-center">
+                            No shows found for {selectedDate}. <br/>
+                            Check 20th Jan onwards in the year 2026.
+                        </p>
                     </div>
                 )}
             </div>
