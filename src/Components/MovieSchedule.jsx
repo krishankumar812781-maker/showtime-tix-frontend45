@@ -11,7 +11,7 @@ const MovieSchedule = () => {
     const [availableCities, setAvailableCities] = useState(['All']);
     const [isListLoading, setIsListLoading] = useState(true); 
     
-    // ⚡ FIX: Updated initial date to 2026 to match your DB records
+    // ⚡ FIX 1: Set initial date explicitly to the 20th
     const [selectedDate, setSelectedDate] = useState('2026-01-20');
     const [selectedCity, setSelectedCity] = useState('All');
 
@@ -46,13 +46,20 @@ const MovieSchedule = () => {
         fetchFilteredShows();
     }, [movieId, selectedDate, selectedCity]);
 
-    // ⚡ FIX: Updated date generator to use 2026
+    // ⚡ FIX 2: Corrected Date Generation Logic
     const dateOptions = useMemo(() => {
         return [...Array(7)].map((_, i) => {
-            // Generates: Jan 20, 21, 22... of 2026
+            // We create the date for each day
             const d = new Date(2026, 0, 20 + i); 
+            
+            // Format to YYYY-MM-DD manually to avoid ISO Timezone shifts
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+
             return {
-                full: d.toISOString().split('T')[0],
+                full: dateString,
                 day: d.toLocaleDateString('en-US', { weekday: 'short' }),
                 date: d.getDate()
             };
@@ -132,6 +139,7 @@ const MovieSchedule = () => {
                                             className="group relative flex flex-col items-center justify-center min-w-[100px] md:min-w-[120px] border-2 border-gray-100 hover:border-[#DC143C] px-4 py-3 md:py-4 rounded-2xl transition-all duration-300 bg-white ring-offset-2 hover:ring-2 hover:ring-red-100"
                                         >
                                             <div className="text-sm md:text-base font-black text-gray-800 group-hover:text-[#DC143C] transition-colors">
+                                                {/* Format time correctly */}
                                                 {new Date(show.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                             
@@ -149,8 +157,7 @@ const MovieSchedule = () => {
                     <div className="text-center py-20 md:py-32 bg-white rounded-[30px] md:rounded-[60px] border-4 border-dashed border-gray-100">
                         <FaCalendarAlt className="text-gray-200 text-5xl mx-auto mb-6" />
                         <p className="text-gray-400 font-black uppercase tracking-widest text-xs md:text-sm px-6 text-center">
-                            No shows found for {selectedDate}. <br/>
-                            Check 20th Jan onwards in the year 2026.
+                            No shows found for {selectedDate}.
                         </p>
                     </div>
                 )}
